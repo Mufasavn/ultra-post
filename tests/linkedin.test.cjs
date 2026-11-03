@@ -1,0 +1,7 @@
+const {test}=require('node:test'),assert=require('node:assert/strict');
+const L=require('../lib/linkedin.cjs');
+const url='https://www.linkedin.com/posts/user_activity-123-abc';
+test('activity URL is resolved only through authorized post endpoints',()=>{assert.deepEqual(L.candidates(url),['urn:li:share:123','urn:li:ugcPost:123']);});
+test('LinkedIn native video import preserves text and downloads real media',async()=>{const calls=[];const result=await L.importPost(url,{linkedinToken:'secret'},{requestFn:async u=>{calls.push(u);return u.includes('/posts/')?{commentary:'Exact\n😊',content:{media:{id:'urn:li:video:abc'}}}:{downloadUrl:'https://dms.licdn.com/video.mp4'};},download:async()=>({bytes:Buffer.from('video'),mime:'video/mp4'}),store:async f=>({file:'stored.mp4',mime:f.mime})});assert.equal(result.text,'Exact\n😊');assert.equal(result.kind,'video');assert.equal(result.media.length,1);assert.equal(result.complete,true);assert.ok(calls[1].includes('/videos/'));});
+test('blocked or missing video stays incomplete rather than silently becoming a text/link post',async()=>{const result=await L.importPost(url,{linkedinToken:'secret'},{requestFn:async u=>u.includes('/posts/')?{commentary:'text',content:{media:{id:'urn:li:video:abc'}}}:{},download:async()=>{},store:async()=>{}});assert.equal(result.kind,'video');assert.equal(result.complete,false);assert.equal(result.media.length,0);});
+test('unsupported LinkedIn articles are not declared complete',()=>{assert.equal(L.mediaAssets({content:{article:{source:'https://example.com'}}}).unsupported,true);});

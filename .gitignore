@@ -1,0 +1,19 @@
+node_modules/
+release/
+.wrangler/
+cloud/.dev.vars
+.env*
+test-output/
+*.log
+/New feelingsurf/
+*.bak
+*.tmp
+state.json
+Local State*
+*.pem
+*.pfx
+*.p12
+*.key
+.ssh/
+.aws/
+.codex/
